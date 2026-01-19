@@ -1,4 +1,5 @@
 :root {
+  /* Theme tokens (Light) */
   --primary: #3b82f6;
   --secondary: #64748b;
   --success: #06b6d4;
@@ -10,6 +11,20 @@
   --muted: #6b7280;
   --border: #e5e7eb;
 
+  /* Derived/accessibility tokens */
+  --navbar-bg: rgba(249, 250, 251, 0.9);
+  --hero-grad-a: rgba(59, 130, 246, 0.12);
+  --hero-grad-b: rgba(249, 250, 251, 1);
+
+  --primary-hover: #2563eb;
+  --focus-ring: rgba(59, 130, 246, 0.35);
+
+  --badge-bg: rgba(6, 182, 212, 0.12);
+  --badge-border: rgba(6, 182, 212, 0.2);
+  --badge-text: #036672;
+
+  --toast-bg: rgba(59, 130, 246, 0.06);
+
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.08);
 
@@ -19,8 +34,43 @@
   --container: 1100px;
 }
 
+/* Dark theme overrides */
+.theme-dark {
+  --primary: #3b82f6;
+  --secondary: #94a3b8;
+  --success: #06b6d4;
+  --error: #ef4444;
+
+  --background: #0b1220;
+  --surface: #111827;
+  --text: #f3f4f6;
+  --muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.12);
+
+  --navbar-bg: rgba(11, 18, 32, 0.85);
+  --hero-grad-a: rgba(59, 130, 246, 0.16);
+  --hero-grad-b: rgba(11, 18, 32, 1);
+
+  --primary-hover: #60a5fa;
+  --focus-ring: rgba(96, 165, 250, 0.45);
+
+  --badge-bg: rgba(6, 182, 212, 0.16);
+  --badge-border: rgba(6, 182, 212, 0.28);
+  --badge-text: #67e8f9;
+
+  --toast-bg: rgba(59, 130, 246, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 12px 18px rgba(0, 0, 0, 0.6);
+}
+
 * {
   box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -29,6 +79,7 @@ body {
     "Apple Color Emoji", "Segoe UI Emoji";
   background: var(--background);
   color: var(--text);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
@@ -37,8 +88,15 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
+}
+
+/* Visible focus without being obnoxious; uses theme token */
+:where(button, [href], input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .container {
@@ -51,9 +109,10 @@ input {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(249, 250, 251, 0.9);
+  background: var(--navbar-bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .navbar-inner {
@@ -61,6 +120,7 @@ input {
   align-items: center;
   justify-content: space-between;
   height: 64px;
+  gap: 12px;
 }
 
 .brand {
@@ -94,6 +154,12 @@ input {
   border-radius: 999px;
   color: var(--muted);
   border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.pill:hover {
+  color: var(--text);
+  border-color: var(--border);
 }
 
 .pill.active {
@@ -108,11 +174,12 @@ input {
 }
 
 .hero {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(249, 250, 251, 1));
+  background: linear-gradient(135deg, var(--hero-grad-a), var(--hero-grad-b));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .hero-title {
@@ -155,13 +222,19 @@ input {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
+  color: var(--text);
   outline: none;
   box-shadow: var(--shadow-sm);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.input::placeholder {
+  color: color-mix(in srgb, var(--muted) 85%, transparent);
 }
 
 .input:focus {
-  border-color: rgba(59, 130, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .btn {
@@ -173,7 +246,12 @@ input {
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  transition: transform 0.06s ease, box-shadow 0.15s ease, background 0.15s ease;
+  transition:
+    transform 0.06s ease,
+    box-shadow 0.15s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
 .btn:active {
@@ -186,11 +264,19 @@ input {
   box-shadow: 0 8px 14px rgba(59, 130, 246, 0.22);
 }
 
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
 .btn-ghost {
   background: var(--surface);
   border-color: var(--border);
   color: var(--text);
   box-shadow: var(--shadow-sm);
+}
+
+.btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--border) 60%, var(--text));
 }
 
 .grid {
@@ -220,6 +306,7 @@ input {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .card-body {
@@ -248,11 +335,12 @@ input {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(6, 182, 212, 0.12);
-  color: #036672;
-  border: 1px solid rgba(6, 182, 212, 0.2);
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  border: 1px solid var(--badge-border);
   font-size: 12px;
   font-weight: 700;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .star {
@@ -282,6 +370,7 @@ input {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   padding: 16px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .panel h2,
@@ -306,6 +395,7 @@ input {
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(59, 130, 246, 0.06);
+  background: var(--toast-bg);
   color: var(--text);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

@@ -30,10 +30,22 @@ function formatCategoryName(categories, categoryId) {
   return c ? c.name : 'All';
 }
 
+function getInitialTheme() {
+  // Default to light if unset/invalid; matches requirement.
+  try {
+    const stored = localStorage.getItem('theme');
+    return stored === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
 // PUBLIC_INTERFACE
 function App() {
   /** Main app state */
   const userId = useMemo(() => getUserId(), []);
+  const [theme, setTheme] = useState(getInitialTheme);
+
   const [categories, setCategories] = useState([]);
   const [activeCategoryId, setActiveCategoryId] = useState(null);
 
@@ -50,6 +62,18 @@ function App() {
   const [myRating, setMyRating] = useState(null);
 
   const [favoriteIds, setFavoriteIds] = useState(new Set());
+
+  useEffect(() => {
+    // Apply theme on body so it affects the whole app (including sticky navbar etc.)
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('theme-dark', isDark);
+
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // ignore storage write errors (e.g., privacy mode)
+    }
+  }, [theme]);
 
   const showToast = msg => {
     setToast(msg);
@@ -102,10 +126,7 @@ function App() {
     setMyRating(null);
 
     try {
-      const [recipe, rating] = await Promise.all([
-        getRecipe(recipeId),
-        getMyRating(recipeId, userId),
-      ]);
+      const [recipe, rating] = await Promise.all([getRecipe(recipeId), getMyRating(recipeId, userId)]);
       setSelectedRecipe(recipe);
       setMyRating(rating?.rating ?? null);
     } catch (err) {
@@ -129,7 +150,7 @@ function App() {
     }
   };
 
-  const setRating = async ratingValue => {
+  const setRatingValue = async ratingValue => {
     if (!selectedRecipeId) return;
     try {
       await upsertRating(selectedRecipeId, userId, ratingValue);
@@ -175,6 +196,10 @@ function App() {
     await refreshBrowse().catch(err => showToast(err.message || 'Failed to search'));
   };
 
+  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
+  const themeLabel = theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme';
+  const themeText = theme === 'dark' ? '☀ Light' : '🌙 Dark';
+
   return (
     <>
       <div className="navbar">
@@ -207,6 +232,16 @@ function App() {
             >
               Favorites ({favoriteIds.size})
             </a>
+
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={toggleTheme}
+              aria-label={themeLabel}
+              title={themeLabel}
+            >
+              {themeText}
+            </button>
           </nav>
         </div>
       </div>
@@ -215,12 +250,8 @@ function App() {
         <div className="container">
           {view !== 'detail' ? (
             <section className="hero" aria-label="Search and filters">
-              <h1 className="hero-title">
-                {view === 'favorites' ? 'Your Favorites' : 'Discover recipes'}
-              </h1>
-              <p className="hero-sub">
-                Filter by category, search by ingredients, save favorites, and rate recipes.
-              </p>
+              <h1 className="hero-title">{view === 'favorites' ? 'Your Favorites' : 'Discover recipes'}</h1>
+              <p className="hero-sub">Filter by category, search by ingredients, save favorites, and rate recipes.</p>
 
               <form className="toolbar" onSubmit={onSubmitSearch}>
                 <div className="search-row">
@@ -276,7 +307,11 @@ function App() {
                 </div>
               </form>
 
-              {toast ? <div className="toast" role="status">{toast}</div> : null}
+              {toast ? (
+                <div className="toast" role="status">
+                  {toast}
+                </div>
+              ) : null}
             </section>
           ) : null}
 
@@ -286,10 +321,7 @@ function App() {
                 <button className="btn btn-ghost" onClick={() => goBrowse().catch(() => {})}>
                   ← Back
                 </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => toggleFavorite(selectedRecipeId).catch(() => {})}
-                >
+                <button className="btn btn-primary" onClick={() => toggleFavorite(selectedRecipeId).catch(() => {})}>
                   {favoriteIds.has(selectedRecipeId) ? '★ Favorited' : '☆ Save favorite'}
                 </button>
               </div>
@@ -302,18 +334,12 @@ function App() {
                     <>
                       <h2 style={{ marginTop: 0 }}>{selectedRecipe.title}</h2>
                       <div className="card-meta">
-                        <span className="badge">
-                          {formatCategoryName(categories, selectedRecipe.category_id)}
-                        </span>
+                        <span className="badge">{formatCategoryName(categories, selectedRecipe.category_id)}</span>
                         <span>
-                          <Stars value={selectedRecipe.avg_rating} />{' '}
-                          <span className="muted">
-                            ({selectedRecipe.rating_count || 0})
-                          </span>
+                          <Stars value={selectedRecipe.avg_rating} /> <span className="muted">({selectedRecipe.rating_count || 0})</span>
                         </span>
                         <span className="muted">
-                          {selectedRecipe.prep_minutes}m prep · {selectedRecipe.cook_minutes}m
-                          cook
+                          {selectedRecipe.prep_minutes}m prep · {selectedRecipe.cook_minutes}m cook
                         </span>
                       </div>
 
@@ -347,7 +373,7 @@ function App() {
                       <button
                         key={v}
                         className={`btn ${myRating === v ? 'btn-primary' : 'btn-ghost'}`}
-                        onClick={() => setRating(v)}
+                        onClick={() => setRatingValue(v)}
                         aria-label={`Set rating to ${v}`}
                       >
                         {v} ★
@@ -355,7 +381,11 @@ function App() {
                     ))}
                   </div>
 
-                  {toast ? <div className="toast" role="status">{toast}</div> : null}
+                  {toast ? (
+                    <div className="toast" role="status">
+                      {toast}
+                    </div>
+                  ) : null}
                 </aside>
               </div>
             </>
@@ -379,8 +409,7 @@ function App() {
                       <div className="card-meta">
                         <span className="badge">{formatCategoryName(categories, r.category_id)}</span>
                         <span>
-                          <Stars value={r.avg_rating} />{' '}
-                          <span className="muted">({r.rating_count || 0})</span>
+                          <Stars value={r.avg_rating} /> <span className="muted">({r.rating_count || 0})</span>
                         </span>
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
@@ -400,7 +429,11 @@ function App() {
                 ))}
               </div>
 
-              {toast ? <div className="toast" role="status">{toast}</div> : null}
+              {toast ? (
+                <div className="toast" role="status">
+                  {toast}
+                </div>
+              ) : null}
             </>
           )}
         </div>
